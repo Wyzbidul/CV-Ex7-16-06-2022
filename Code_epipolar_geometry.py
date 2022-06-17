@@ -82,38 +82,26 @@ F, mask = cv.findFundamentalMat(pts1, pts2, cv.FM_LMEDS)
 pts1 = pts1[mask.ravel()==1]
 pts2 = pts2[mask.ravel()==1]
 
-pts_rect1 = pts1.reshape((pts1.shape[0]*2,1))
-pts_rect2 = pts2.reshape((pts2.shape[0]*2,1))
-
-_, H1, H2 = cv.stereoRectifyUncalibrated(pts_rect1, pts_rect2, F, img1.shape)
-
-img_rect1 = cv.warpPerspective(img1, H1, img1.shape)
-img_rect2 = cv.warpPerspective(img2, H2, img2.shape)
-
-img_rect1 = cv.cvtColor(img1,cv.COLOR_GRAY2BGR)
-img_rect2= cv.cvtColor(img2,cv.COLOR_GRAY2BGR)
-
 # Find epilines corresponding to points in right image (second image) and
 # drawing its lines on left image
 lines1 = cv.computeCorrespondEpilines(pts2.reshape(-1,1,2), 2,F)
 lines1 = lines1.reshape(-1,3)
 
-lines_rect1 = cv.computeCorrespondEpilines(pts2.reshape(-1,1,2), 2,F)
-lines_rect1 = lines_rect1.reshape(-1,3)
-
 img5,img6 = drawlines(img1,img2,lines1,pts1,pts2)
-# img_rect5,img_rect6 = drawlines(img_rect1,img_rect2,lines_rect1,pts1,pts2)
 
 # Find epilines corresponding to points in left image (first image) and
 # drawing its lines on right image
 lines2 = cv.computeCorrespondEpilines(pts1.reshape(-1,1,2), 1, F)
 lines2 = lines2.reshape(-1,3)
 
-lines_rect2 = cv.computeCorrespondEpilines(pts1.reshape(-1,1,2), 1, F)
-lines_rect2 = lines_rect2.reshape(-1,3)
-
 img3, img4 = drawlines(img2, img1, lines2, pts2, pts1)
-# img_rect3, img_rect4 = drawlines(img_rect2, img_rect1, lines_rect2, pts2, pts1)
+
+#Calculate the homographies between the two images onlier points
+_, H1, H2 = cv.stereoRectifyUncalibrated(pts1, pts2, F, img1.shape)
+
+#Wrap the images to obtain a rectified viewpoint using the homographies
+img_rect1 = cv.warpPerspective(img5, H1, img1.shape)
+img_rect2 = cv.warpPerspective(img3, H2, img2.shape)
 
 #Accuracy of the F-Matrix
 error1 = []
@@ -122,14 +110,6 @@ error2 = []
 for k in range(len(pts1)):
     error1.append(distance(pts1[k], lines1[k]))
     error2.append(distance(pts2[k], lines2[k]))
-    
-
-# #Disparity calculations
-# stereo = cv.StereoBM(numDisparities=160, blockSize=15)
-# disparity1 = stereo.compute(img1,img_rect1)
-# disparity2 = stereo.compute(img2,img_rect2)
-# imshow(disparity1,'gray')
-# imshow(disparity2,'gray')
 
 #Plot distances error
 n = len(error1)
@@ -143,18 +123,39 @@ for i in range(n):
 figure(figsize=(20,5))
 subplot(121), plot(X, Y), plot(X, Y_mean, label="Mean = " + str(Y_mean[0]))
 
+#Plot result images without rectification
 figure(figsize=(20,20))
 subplot(121), axis("off"), imshow(img5)
-subplot(122), axis("off"), imshow(img_rect2)
+subplot(122), axis("off"), imshow(img3)
 
+#Plot result images with rectification
 figure(figsize=(20,20))
 subplot(121), axis("off"), imshow(img_rect1)
-subplot(122), axis("off"), imshow(img3)
+subplot(122), axis("off"), imshow(img_rect2)
 show()
 
+#Disparity calculations
+#Calculations only function on gray images
+img_disp1 = cv.cvtColor(img_rect1,cv.COLOR_BGR2GRAY)
+img_disp2 = cv.cvtColor(img_rect2,cv.COLOR_BGR2GRAY)
 
-cv.imwrite('result_left.jpg', img5)
-cv.imwrite('result_right.jpg', img3)
+stereo = cv.StereoBM_create(numDisparities=160, blockSize=15)
+disparity = stereo.compute(img_disp1,img_disp2)
+
+#Plot disparity
+figure(figsize=(10,10))
+imshow(disparity,'gray')
+axis('off')
+show()
+
+#Save result images
+cv.imwrite('./drive/MyDrive/Images_CV/result_left.jpg', img5)
+cv.imwrite('./drive/MyDrive/Images_CV/result_right.jpg', img3)
+
+cv.imwrite('./drive/MyDrive/Images_CV/result_left_rect.jpg', img_rect1)
+cv.imwrite('./drive/MyDrive/Images_CV/result_right_rect.jpg', img_rect2)
+
+cv.imwrite('./drive/MyDrive/Images_CV/disparity.jpg', disparity)
 
 print('END TESTS')
 #####################################################################################################################################
