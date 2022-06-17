@@ -149,13 +149,13 @@ axis('off')
 show()
 
 #Save result images
-cv.imwrite('./drive/MyDrive/Images_CV/result_left.jpg', img5)
-cv.imwrite('./drive/MyDrive/Images_CV/result_right.jpg', img3)
+cv.imwrite('result_left.jpg', img5)
+cv.imwrite('result_right.jpg', img3)
 
-cv.imwrite('./drive/MyDrive/Images_CV/result_left_rect.jpg', img_rect1)
-cv.imwrite('./drive/MyDrive/Images_CV/result_right_rect.jpg', img_rect2)
+cv.imwrite('result_left_rect.jpg', img_rect1)
+cv.imwrite('result_right_rect.jpg', img_rect2)
 
-cv.imwrite('./drive/MyDrive/Images_CV/disparity.jpg', disparity)
+cv.imwrite('disparity.jpg', disparity)
 
 print('END TESTS')
 #####################################################################################################################################
